@@ -62,3 +62,10 @@ LOGGING = {
   }
 }</pre>
 
+Lastly, if you have particular URIs you wish to ignore you can define them using basic regular expressions in the TIMELOG_IGNORE_URIS list in settings.py:
+
+<pre>TIMELOG_IGNORE_URIS = (
+    '^/admin/',         # Ignores all URIs beginning with '/admin/'
+    '^/other_page/$',   # Ignores the URI '/other_page/' only, but not '/other_page/more/'.
+    '.jpg$',            # Ignores all URIs ending in .jpg
+)</pre>
