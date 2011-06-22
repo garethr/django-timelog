@@ -13,7 +13,7 @@ setup(
     keywords = "django",
     description = "Performance logging middlware and analysis tools for Django",
     install_requires=[
-        'textable',
+        'texttable',
         'progressbar',
     ],
     classifiers = [
