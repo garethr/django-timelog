@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from setuptools import setup, find_packages
 
 setup(
@@ -6,7 +7,7 @@ setup(
     author = "Gareth Rushgrove",
     author_email = "gareth@morethanseven.net",
     url = "http://github.com/garethr/django-timelog/",
-    
+
     packages = find_packages('src'),
     package_dir = {'':'src'},
     license = "MIT License",
