@@ -1,0 +1,23 @@
+Changes
+=======
+
+0.4 (2011-06-23)
+-----------------------
+
+* Don't swallow an exception if it happens earlier in the middleware stack
+
+0.3 (2011-06-22)
+-----------------------
+
+* Fix dependency regression in previous release
+
+0.2 (2011-06-22)
+-----------------------
+
+* Support Python versions odler than 2.6
+* Add ability to set URIs to be excluded from the report
+
+0.1 (2011-06-09)
+-----------------------
+
+* Initial working release
