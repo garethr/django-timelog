@@ -52,7 +52,7 @@ def generate_table_from(data):
     table.add_row(["view", "method", "status", "count", "minimum", "maximum", "mean", "stdev"]) 
     table.set_cols_align(["l", "l", "l", "r", "r", "r", "r", "r"])
 
-    for item in data:
+    for item in sorted(data):
         mean = round(sum(data[item]['times'])/data[item]['count'], 3)
         
         sdsq = sum([(i - mean) ** 2 for i in data[item]['times']])
