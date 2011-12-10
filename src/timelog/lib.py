@@ -8,7 +8,7 @@ from progressbar import ProgressBar, Percentage, Bar
 from django.core.urlresolvers import resolve, Resolver404
 
 
-PATTERN = r"""^([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8},[0-9]{3}) (GET|POST|PUT|DELETE|HEAD) "(.*)" \((.*)\) (.*)"""
+PATTERN = r"""^([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8},[0-9]{3}) (GET|POST|PUT|DELETE|HEAD|CONNECT) "(.*)" \((.*)\) (.*)"""
 
 CACHED_VIEWS = {}
 
@@ -20,12 +20,12 @@ def count_lines_in(filename):
     lines = 0
     buf_size = 1024 * 1024
     read_f = f.read # loop optimization
-
+    
     buf = read_f(buf_size)
     while buf:
         lines += buf.count('\n')
         buf = read_f(buf_size)
-
+    
     return lines
 
 def view_name_from(path):
@@ -34,7 +34,15 @@ def view_name_from(path):
         return CACHED_VIEWS[path]
         
     except KeyError:
-        view =  "%s.%s" % (resolve(path).func.__module__, resolve(path).func.__name__)
+        view = resolve(path)
+        module = path
+        name = ''
+        if hasattr(view.func, '__module__'):
+            module = resolve(path).func.__module__
+        if hasattr(view.func, '__name__'):
+            name = resolve(path).func.__name__
+        
+        view =  "%s.%s" % (module, name)
         CACHED_VIEWS[path] = view
         return view
 
@@ -44,7 +52,7 @@ def generate_table_from(data):
     table.add_row(["view", "method", "status", "count", "minimum", "maximum", "mean", "stdev"]) 
     table.set_cols_align(["l", "l", "l", "r", "r", "r", "r", "r"])
 
-    for item in data:
+    for item in sorted(data):
         mean = round(sum(data[item]['times'])/data[item]['count'], 3)
         
         sdsq = sum([(i - mean) ** 2 for i in data[item]['times']])
@@ -52,7 +60,7 @@ def generate_table_from(data):
             stdev = '%.2f' % ((sdsq / (len(data[item]['times']) - 1)) ** .5)
         except ZeroDivisionError:
             stdev = '0.00'
-
+        
         table.add_row([data[item]['view'], data[item]['method'], data[item]['status'], data[item]['count'], data[item]['minimum'], data[item]['maximum'], '%.3f' % mean, stdev])
 
     return table.draw()
@@ -63,22 +71,22 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
         lines = count_lines_in(logfile)
         pbar = ProgressBar(widgets=[Percentage(), Bar()], maxval=lines+1).start()
         counter = 0
-
+    
     data = {}
-
+    
     compiled_pattern = compile(pattern)
     for line in fileinput.input([logfile]):
-
+        
         if progress:
             counter = counter + 1
-
+        
         parsed = compiled_pattern.findall(line)[0]
         date = parsed[0]
         method = parsed[1]
         path = parsed[2]
         status = parsed[3]
         time = parsed[4]
-
+        
         try:
             ignore = False
             for ignored_path in IGNORE_PATHS:
@@ -110,11 +118,11 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
                     }
         except Resolver404:
             pass
-
+        
         if progress:
             pbar.update(counter)
-
+    
     if progress:
         pbar.finish()
-
+    
     return data
