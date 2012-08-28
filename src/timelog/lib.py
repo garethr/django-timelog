@@ -60,8 +60,11 @@ def generate_table_from(data):
             stdev = '%.2f' % ((sdsq / (len(data[item]['times']) - 1)) ** .5)
         except ZeroDivisionError:
             stdev = '0.00'
+
+        minimum = "%.2f" % min(data[item]['times'])
+        maximum = "%.2f" % max(data[item]['times'])
         
-        table.add_row([data[item]['view'], data[item]['method'], data[item]['status'], data[item]['count'], data[item]['minimum'], data[item]['maximum'], '%.3f' % mean, stdev])
+        table.add_row([data[item]['view'], data[item]['method'], data[item]['status'], data[item]['count'], minimum, maximum, '%.3f' % mean, stdev])
 
     return table.draw()
 
@@ -101,16 +104,10 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
                 key = "%s-%s-%s" % (view, status, method)
                 try:
                     data[key]['count'] = data[key]['count'] + 1
-                    if time < data[key]['minimum']:
-                        data[key]['minimum'] = time
-                    if time > data[key]['maximum']:
-                        data[key]['maximum'] = time
                     data[key]['times'].append(float(time))
                 except KeyError:
                     data[key] = {
                         'count': 1,
-                        'minimum': time,
-                        'maximum': time,
                         'status': status,
                         'view': view,
                         'method': method,
