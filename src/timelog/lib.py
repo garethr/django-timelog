@@ -7,8 +7,7 @@ from progressbar import ProgressBar, Percentage, Bar
 
 from django.core.urlresolvers import resolve, Resolver404
 
-
-PATTERN = r"""^([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8},[0-9]{3}) (GET|POST|PUT|DELETE|HEAD|CONNECT) "(.*)" \((.*)\) (.*)"""
+PATTERN = r"""^([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8},[0-9]{3}) (GET|POST|PUT|DELETE|HEAD) "(.*)" \((.*)\) (.*?) \((\d+)q, (.*?)\)"""
 
 CACHED_VIEWS = {}
 
@@ -49,11 +48,14 @@ def view_name_from(path):
 def generate_table_from(data):
     "Output a nicely formatted ascii table"
     table = Texttable(max_width=120)
-    table.add_row(["view", "method", "status", "count", "minimum", "maximum", "mean", "stdev"]) 
-    table.set_cols_align(["l", "l", "l", "r", "r", "r", "r", "r"])
+    table.add_row(["view", "method", "status", "count", "minimum", "maximum", "mean", "stdev", "queries", "querytime"]) 
+    table.set_cols_align(["l", "l", "l", "r", "r", "r", "r", "r", "r", "r"])
 
     for item in sorted(data):
         mean = round(sum(data[item]['times'])/data[item]['count'], 3)
+
+        mean_sql = round(sum(data[item]['sql'])/data[item]['count'], 3)
+        mean_sqltime = round(sum(data[item]['sqltime'])/data[item]['count'], 3)
         
         sdsq = sum([(i - mean) ** 2 for i in data[item]['times']])
         try:
@@ -63,8 +65,7 @@ def generate_table_from(data):
 
         minimum = "%.2f" % min(data[item]['times'])
         maximum = "%.2f" % max(data[item]['times'])
-        
-        table.add_row([data[item]['view'], data[item]['method'], data[item]['status'], data[item]['count'], minimum, maximum, '%.3f' % mean, stdev])
+        table.add_row([data[item]['view'], data[item]['method'], data[item]['status'], data[item]['count'], minimum, maximum, '%.3f' % mean, stdev, mean_sql, mean_sqltime])
 
     return table.draw()
 
@@ -89,7 +90,9 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
         path = parsed[2]
         status = parsed[3]
         time = parsed[4]
-        
+        sql = parsed[5]
+        sqltime = parsed[6]
+
         try:
             ignore = False
             for ignored_path in IGNORE_PATHS:
@@ -105,6 +108,8 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
                 try:
                     data[key]['count'] = data[key]['count'] + 1
                     data[key]['times'].append(float(time))
+                    data[key]['sql'].append(int(sql))
+                    data[key]['sqltime'].append(float(sqltime))
                 except KeyError:
                     data[key] = {
                         'count': 1,
@@ -112,6 +117,8 @@ def analyze_log_file(logfile, pattern, reverse_paths=True, progress=True):
                         'view': view,
                         'method': method,
                         'times': [float(time)],
+                        'sql': [int(sql)],
+                        'sqltime': [float(sqltime)],
                     }
         except Resolver404:
             pass
